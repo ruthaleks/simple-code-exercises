@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io;
 #[derive(Debug)]
 
 struct Max {
@@ -87,7 +88,91 @@ fn exercise_two() {
     }
 }
 
+enum Command {
+    Add{department: String, name: String},
+    View{department: String},
+    Quit,
+    Invalid
+}
+
+fn to_cmd(line: &str) -> Command {
+    let list: Vec<&str> = line.split(' ').collect(); 
+    let cmd = list.first().expect("Index out of bound").trim().to_string();
+    match list.len() {
+        2 => {
+            if cmd == "View" {
+                let dep = list.get(1).expect("Index out of bound").trim();
+                Command::View{department: dep.to_string()}
+            } else {
+                Command::Invalid
+            }
+        }
+        4 => {
+            if cmd == "Add" {
+                let department = list.get(3).expect("Index out of bound").trim().to_string();
+                let name = list.get(1).expect("Index out of bound").trim().to_string();
+                Command::Add { department, 
+                               name }
+            } else {
+                Command::Invalid
+            }
+        }
+        1 => if cmd  == "Quit" {
+            Command::Quit
+        } else {
+            Command::Invalid
+        }
+        _ => Command::Invalid
+        
+    }
+}
+
+fn exercise_three() {
+    // Using a hash map and vectors, create a text interface to allow a 
+    // user to add employee names to a department in a company; for example, 
+    // “Add Sally to Engineering” or “Add Amir to Sales.” Then let the user 
+    // retrieve a list of all people in a department or all people in the company 
+    // by department, sorted alphabetically.
+
+    let mut hash_map: HashMap<String, Vec<String>> = HashMap::new(); 
+    
+
+    println!("Enter a command");
+    let mut run_program = true;
+    while run_program {
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("Failed to read line");
+
+        match to_cmd(&input) {
+            Command::Add{department, name} => {
+                let v = hash_map.entry(department).or_default();
+                v.push(name);
+                println!("{hash_map:?}");
+            }
+            Command::View{department} => {
+                let list = hash_map.get(&department);
+                
+                match list {
+                    Some(l) => {
+                        let mut all = l.clone();
+                        all.sort();
+                        println!("All people in {department}: {all:?}")
+                    }
+                    None => println!("There is no department named {department}")
+                }
+                
+            }
+            Command::Quit => run_program = false,
+            Command::Invalid => {
+                println!("Invalid command!")
+            }
+        }
+    }
+}
+
 fn main() {
     exercise_one();
     exercise_two();
+    exercise_three();
 }
